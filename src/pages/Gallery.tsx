@@ -132,7 +132,7 @@ const Gallery = () => {
                 ))}
               </div>
 
-              <div className={`columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4 ${debugLayout ? `rounded-2xl p-2 ${debugGridClass}` : ""}`}>
+              <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 ${debugLayout ? `rounded-2xl p-2 ${debugGridClass}` : ""}`}>
                 {filtered.map((img, i) => (
                   <button
                     key={`${img.src}-${i}`}
@@ -140,7 +140,7 @@ const Gallery = () => {
                       photoRefs.current[i] = node;
                     }}
                     onClick={() => setOpenIndex(i)}
-                    className={`relative block w-full overflow-hidden rounded-2xl group break-inside-avoid ${debugLayout ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
+                    className={`relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-secondary shadow-soft transition-elegant group ${debugLayout ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
                   >
                     {(debugLayout || photoMetrics[i]) && photoMetrics[i] && (
                       <div className={`absolute left-3 top-3 z-10 rounded-md px-2 py-1 font-mono text-[11px] leading-tight shadow-lg ring-1 backdrop-blur-sm ${debugLayout ? "bg-primary text-primary-foreground ring-primary" : "bg-background/90 text-foreground ring-border sm:hidden"}`}>
@@ -148,7 +148,7 @@ const Gallery = () => {
                         <div>{photoMetrics[i].label}</div>
                       </div>
                     )}
-                    <img src={img.src} alt={img.alt} loading="lazy" className="w-full transition-elegant group-hover:scale-105" />
+                    <img src={img.src} alt={img.alt} loading="lazy" className="h-full w-full object-cover transition-elegant group-hover:scale-105" />
                   </button>
                 ))}
               </div>
@@ -195,7 +195,7 @@ const Gallery = () => {
               <CarouselContent>
                 {filtered.map((img, i) => (
                   <CarouselItem key={`${img.src}-modal-${i}`}>
-                    <img src={img.src} alt={img.alt} className="max-h-[85vh] w-full rounded-2xl object-contain" />
+                    <img src={img.src} alt={img.alt} className="mx-auto h-auto max-h-[85vh] w-auto max-w-full rounded-2xl object-contain" />
                   </CarouselItem>
                 ))}
               </CarouselContent>
