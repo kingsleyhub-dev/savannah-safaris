@@ -56,7 +56,10 @@ const AdminLogin = () => {
         const { error } = await supabase.auth.signUp({
           email: emailParsed.data,
           password: pwParsed.data,
-          options: { emailRedirectTo: `${window.location.origin}/admin/dashboard` },
+          options: {
+            emailRedirectTo: `${window.location.origin}/admin/dashboard`,
+            data: { account_type: "admin" },
+          },
         });
         if (error) { toast.error(error.message); return; }
         toast.success("Account created. Signing you in…");
