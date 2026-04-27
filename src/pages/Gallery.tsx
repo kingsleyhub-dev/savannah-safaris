@@ -160,18 +160,18 @@ const Gallery = () => {
               ) : (
                 <Carousel opts={{ align: "start" }} className="mx-auto max-w-5xl">
                   <CarouselContent>
-                  {publishedVideos.map((video) => (
+                  {publishedVideos.map((video, index) => (
                     <CarouselItem key={video.id} className="sm:basis-1/2 lg:basis-1/3">
                       <div
                         ref={(node) => {
-                          videoRefs.current[publishedVideos.indexOf(video)] = node;
+                          videoRefs.current[index] = node;
                         }}
-                        className="relative"
+                        className={`relative rounded-2xl ${debugLayout ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
                       >
-                        {videoMetrics[publishedVideos.indexOf(video)] && (
-                          <div className="absolute left-3 top-3 z-10 rounded-md bg-background/90 px-2 py-1 font-mono text-[11px] leading-tight text-foreground shadow-lg ring-1 ring-border backdrop-blur-sm sm:hidden">
-                            <div>{videoMetrics[publishedVideos.indexOf(video)].width}×{videoMetrics[publishedVideos.indexOf(video)].height}</div>
-                            <div>{videoMetrics[publishedVideos.indexOf(video)].label}</div>
+                        {(debugLayout || videoMetrics[index]) && videoMetrics[index] && (
+                          <div className={`absolute left-3 top-3 z-10 rounded-md px-2 py-1 font-mono text-[11px] leading-tight shadow-lg ring-1 backdrop-blur-sm ${debugLayout ? "bg-primary text-primary-foreground ring-primary" : "bg-background/90 text-foreground ring-border sm:hidden"}`}>
+                            <div>{videoMetrics[index].width}×{videoMetrics[index].height}</div>
+                            <div>{videoMetrics[index].label}</div>
                           </div>
                         )}
                         <video src={video.public_url} controls preload="metadata" className="aspect-video w-full rounded-2xl bg-secondary object-cover" />
