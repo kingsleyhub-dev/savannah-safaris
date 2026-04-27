@@ -148,7 +148,7 @@ const Gallery = () => {
                         <div>{photoMetrics[i].label}</div>
                       </div>
                     )}
-                    <img src={img.src} alt={img.alt} loading="lazy" className="h-full w-full object-cover transition-elegant group-hover:scale-105" />
+                    <img src={img.src} alt={img.alt} loading="lazy" className="h-full w-full object-contain transition-elegant group-hover:scale-[1.02]" />
                   </button>
                 ))}
               </div>
