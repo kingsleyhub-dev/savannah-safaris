@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Loader2, Save, Send, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { logAudit } from "../lib/audit";
+import { requireAdmin } from "../lib/requireAdmin";
+import { CONTENT_MANAGER_ROLES } from "@/admin/auth/permissions";
 import { ImageField } from "../components/ImageField";
 
 interface Section { id: string; slug: string; title: string; sort_order: number; }
@@ -55,25 +57,37 @@ const PageEditor = () => {
 
   const saveDraft = async (field: Field) => {
     setSavingId(field.id);
-    const { error } = await supabase.from("content_fields")
-      .update({ draft_value: drafts[field.id] })
-      .eq("id", field.id);
-    setSavingId(null);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Draft saved");
-    await logAudit("save_draft", "content_field", field.id, { key: field.key });
+    try {
+      await requireAdmin(CONTENT_MANAGER_ROLES);
+      const { error } = await supabase.from("content_fields")
+        .update({ draft_value: drafts[field.id] })
+        .eq("id", field.id);
+      if (error) { toast.error(error.message); return; }
+      toast.success("Draft saved");
+      await logAudit("save_draft", "content_field", field.id, { key: field.key });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Permission denied");
+    } finally {
+      setSavingId(null);
+    }
   };
 
   const publish = async (field: Field) => {
     setSavingId(field.id);
-    const value = drafts[field.id];
-    const { error } = await supabase.from("content_fields")
-      .update({ draft_value: value, published_value: value, published_at: new Date().toISOString() })
-      .eq("id", field.id);
-    setSavingId(null);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Published live");
-    await logAudit("publish", "content_field", field.id, { key: field.key });
+    try {
+      await requireAdmin(CONTENT_MANAGER_ROLES);
+      const value = drafts[field.id];
+      const { error } = await supabase.from("content_fields")
+        .update({ draft_value: value, published_value: value, published_at: new Date().toISOString() })
+        .eq("id", field.id);
+      if (error) { toast.error(error.message); return; }
+      toast.success("Published live");
+      await logAudit("publish", "content_field", field.id, { key: field.key });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Permission denied");
+    } finally {
+      setSavingId(null);
+    }
   };
 
   if (loading) return <div className="grid place-items-center py-20"><Loader2 className="size-6 animate-spin text-primary" /></div>;

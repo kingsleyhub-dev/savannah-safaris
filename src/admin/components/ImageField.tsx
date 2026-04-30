@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Upload, Loader2, Image as ImageIcon, X } from "lucide-react";
 import { toast } from "sonner";
 import { logAudit } from "../lib/audit";
+import { requireAdmin } from "../lib/requireAdmin";
+import { MEDIA_MANAGER_ROLES } from "@/admin/auth/permissions";
 
 interface Props {
   value: string;
@@ -42,6 +44,14 @@ export const ImageField = ({ value, onChange }: Props) => {
 
     // 2. Run the actual upload in the background (no await on the caller).
     void (async () => {
+      try {
+        await requireAdmin(MEDIA_MANAGER_ROLES);
+      } catch (err) {
+        setUploading(false);
+        setPreview(null);
+        toast.error(err instanceof Error ? err.message : "Permission denied");
+        return;
+      }
       const ext = file.name.split(".").pop();
       const path = `images/${crypto.randomUUID()}.${ext}`;
       const { error: upErr } = await supabase.storage

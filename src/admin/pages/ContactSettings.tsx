@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Save, Phone, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { logAudit } from "../lib/audit";
+import { requireAdmin } from "../lib/requireAdmin";
+import { SETTINGS_MANAGER_ROLES } from "@/admin/auth/permissions";
 import { z } from "zod";
 
 interface ContactValue {
@@ -41,14 +43,19 @@ const ContactSettings = () => {
     const parsed = schema.safeParse(val);
     if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
     setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from("site_settings")
-      .update({ value: parsed.data as never, updated_by: user?.id })
-      .eq("key", "contact");
-    setSaving(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Contact info updated — live on site");
-    await logAudit("update", "site_setting", "contact");
+    try {
+      const { user } = await requireAdmin(SETTINGS_MANAGER_ROLES);
+      const { error } = await supabase.from("site_settings")
+        .update({ value: parsed.data as never, updated_by: user.id })
+        .eq("key", "contact");
+      if (error) { toast.error(error.message); return; }
+      toast.success("Contact info updated — live on site");
+      await logAudit("update", "site_setting", "contact");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Permission denied");
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading || !val) return <div className="grid place-items-center py-20"><Loader2 className="size-6 animate-spin text-primary" /></div>;

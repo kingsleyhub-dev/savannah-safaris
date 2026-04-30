@@ -5,6 +5,7 @@ import { LayoutDashboard, FileText, Image as ImageIcon, Phone, Settings, LogOut,
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { CONTENT_MANAGER_ROLES, MEDIA_MANAGER_ROLES, SETTINGS_MANAGER_ROLES, USER_MANAGER_ROLES, hasRequiredRole } from "@/admin/auth/permissions";
+import { RoleGate } from "@/admin/auth/RoleGate";
 
 const nav = [
   { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -76,7 +77,9 @@ export const AdminLayout = () => {
           <div className="size-5" />
         </header>
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-6xl w-full mx-auto">
-          <Outlet />
+          <RoleGate>
+            <Outlet />
+          </RoleGate>
         </main>
       </div>
     </div>
