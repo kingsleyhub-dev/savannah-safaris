@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CheckCircle2, Circle, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { logAudit } from "../lib/audit";
+import { requireAdmin } from "../lib/requireAdmin";
+import { SETTINGS_MANAGER_ROLES } from "@/admin/auth/permissions";
 
 interface Branding { name: string; tagline: string; }
 type VercelEnvironment = "development" | "staging" | "production";
@@ -71,40 +73,50 @@ const SiteSettings = () => {
     if (!branding) return;
     if (!branding.name.trim()) { toast.error("Brand name is required"); return; }
     setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from("site_settings")
-      .update({ value: branding as never, updated_by: user?.id })
-      .eq("key", "branding");
-    setSaving(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Branding updated");
-    await logAudit("update", "site_setting", "branding");
+    try {
+      const { user } = await requireAdmin(SETTINGS_MANAGER_ROLES);
+      const { error } = await supabase.from("site_settings")
+        .update({ value: branding as never, updated_by: user.id })
+        .eq("key", "branding");
+      if (error) { toast.error(error.message); return; }
+      toast.success("Branding updated");
+      await logAudit("update", "site_setting", "branding");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Permission denied");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const saveChecklist = async () => {
     setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data: existing } = await supabase
-      .from("site_settings")
-      .select("id")
-      .eq("key", "vercel_environment_checklist")
-      .maybeSingle();
+    try {
+      const { user } = await requireAdmin(SETTINGS_MANAGER_ROLES);
+      const { data: existing } = await supabase
+        .from("site_settings")
+        .select("id")
+        .eq("key", "vercel_environment_checklist")
+        .maybeSingle();
 
-    const payload = {
-      key: "vercel_environment_checklist",
-      value: checklist as never,
-      description: "Tracks required Vercel environment variables by deployment target.",
-      updated_by: user?.id,
-    };
+      const payload = {
+        key: "vercel_environment_checklist",
+        value: checklist as never,
+        description: "Tracks required Vercel environment variables by deployment target.",
+        updated_by: user.id,
+      };
 
-    const { error } = existing?.id
-      ? await supabase.from("site_settings").update(payload).eq("id", existing.id)
-      : await supabase.from("site_settings").insert(payload);
+      const { error } = existing?.id
+        ? await supabase.from("site_settings").update(payload).eq("id", existing.id)
+        : await supabase.from("site_settings").insert(payload);
 
-    setSaving(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Environment checklist updated");
-    await logAudit("update", "site_setting", "vercel_environment_checklist");
+      if (error) { toast.error(error.message); return; }
+      toast.success("Environment checklist updated");
+      await logAudit("update", "site_setting", "vercel_environment_checklist");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Permission denied");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const selectedItems = checklist[selectedEnvironment];

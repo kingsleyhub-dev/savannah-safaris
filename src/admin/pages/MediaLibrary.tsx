@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Upload, Trash2, Loader2, Image as ImageIcon, Video, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { logAudit } from "../lib/audit";
+import { requireAdmin } from "../lib/requireAdmin";
+import { MEDIA_MANAGER_ROLES } from "@/admin/auth/permissions";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
@@ -39,9 +41,15 @@ const MediaLibrary = () => {
    * - The grid refreshes once all uploads settle, but the input is freed instantly
    *   so the admin can keep browsing without UI lag.
    */
-  const handleUpload = (files: FileList) => {
+  const handleUpload = async (files: FileList) => {
     const list = Array.from(files);
     if (inputRef.current) inputRef.current.value = "";
+    try {
+      await requireAdmin(MEDIA_MANAGER_ROLES);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Permission denied");
+      return;
+    }
     setUploading(true);
     toast.info(`Uploading ${list.length} file${list.length === 1 ? "" : "s"}…`);
 
@@ -94,6 +102,12 @@ const MediaLibrary = () => {
 
   const remove = async (asset: Asset) => {
     if (!confirm(`Delete ${asset.filename}? This cannot be undone.`)) return;
+    try {
+      await requireAdmin(MEDIA_MANAGER_ROLES);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Permission denied");
+      return;
+    }
     await supabase.storage.from("media").remove([asset.storage_path]);
     await supabase.from("media_assets").delete().eq("id", asset.id);
     await logAudit("delete_media", "media_asset", asset.id, { filename: asset.filename });
@@ -108,6 +122,12 @@ const MediaLibrary = () => {
   };
 
   const updateGalleryState = async (asset: Asset, changes: Partial<Pick<Asset, "show_in_gallery" | "is_published" | "gallery_category">>) => {
+    try {
+      await requireAdmin(MEDIA_MANAGER_ROLES);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Permission denied");
+      return;
+    }
     const nextPublished = changes.is_published ?? asset.is_published ?? false;
     const { error } = await (supabase.from("media_assets") as any).update({
       ...changes,
