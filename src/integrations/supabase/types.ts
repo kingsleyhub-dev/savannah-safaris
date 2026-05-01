@@ -51,12 +51,15 @@ export type Database = {
         Row: {
           add_ons: Json
           addons_cents: number
+          amount_kes_cents: number | null
           check_in: string
           check_out: string
           cleaning_cents: number
           created_at: string
+          currency: string
           discount_cents: number
           discount_percent: number
+          furnished_option: string | null
           guest_country: string | null
           guest_email: string
           guest_name: string
@@ -64,7 +67,12 @@ export type Database = {
           guests: number
           id: string
           nights: number
+          payment_method: string | null
+          payment_reference: string | null
+          payment_status: string
           promo_code: string | null
+          property_id: string | null
+          rental_type: string
           status: string
           subtotal_cents: number
           total_cents: number
@@ -74,12 +82,15 @@ export type Database = {
         Insert: {
           add_ons?: Json
           addons_cents?: number
+          amount_kes_cents?: number | null
           check_in: string
           check_out: string
           cleaning_cents?: number
           created_at?: string
+          currency?: string
           discount_cents?: number
           discount_percent?: number
+          furnished_option?: string | null
           guest_country?: string | null
           guest_email: string
           guest_name: string
@@ -87,7 +98,12 @@ export type Database = {
           guests?: number
           id?: string
           nights: number
+          payment_method?: string | null
+          payment_reference?: string | null
+          payment_status?: string
           promo_code?: string | null
+          property_id?: string | null
+          rental_type?: string
           status?: string
           subtotal_cents?: number
           total_cents?: number
@@ -97,12 +113,15 @@ export type Database = {
         Update: {
           add_ons?: Json
           addons_cents?: number
+          amount_kes_cents?: number | null
           check_in?: string
           check_out?: string
           cleaning_cents?: number
           created_at?: string
+          currency?: string
           discount_cents?: number
           discount_percent?: number
+          furnished_option?: string | null
           guest_country?: string | null
           guest_email?: string
           guest_name?: string
@@ -110,14 +129,27 @@ export type Database = {
           guests?: number
           id?: string
           nights?: number
+          payment_method?: string | null
+          payment_reference?: string | null
+          payment_status?: string
           promo_code?: string | null
+          property_id?: string | null
+          rental_type?: string
           status?: string
           subtotal_cents?: number
           total_cents?: number
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bookings_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       content_fields: {
         Row: {
@@ -253,6 +285,62 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount_cents: number
+          booking_id: string | null
+          created_at: string
+          currency: string
+          failure_reason: string | null
+          id: string
+          provider: string
+          provider_reference: string | null
+          provider_request: Json | null
+          provider_response: Json | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          booking_id?: string | null
+          created_at?: string
+          currency?: string
+          failure_reason?: string | null
+          id?: string
+          provider: string
+          provider_reference?: string | null
+          provider_request?: Json | null
+          provider_response?: Json | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          booking_id?: string | null
+          created_at?: string
+          currency?: string
+          failure_reason?: string | null
+          id?: string
+          provider?: string
+          provider_reference?: string | null
+          provider_request?: Json | null
+          provider_response?: Json | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -277,6 +365,87 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      properties: {
+        Row: {
+          amenities_inherit: boolean
+          bathrooms: number
+          bedrooms: number
+          block_label: string | null
+          created_at: string
+          description: string | null
+          hero_image_url: string | null
+          hero_video_url: string | null
+          id: string
+          is_active: boolean
+          location: string
+          max_guests: number
+          name: string
+          price_monthly_furnished_kes_cents: number | null
+          price_monthly_kes_cents: number | null
+          price_nightly_kes_cents: number | null
+          price_per_night_usd: number | null
+          slug: string
+          sort_order: number
+          supports_furnished_option: boolean
+          supports_monthly: boolean
+          supports_nightly: boolean
+          tagline: string | null
+          updated_at: string
+        }
+        Insert: {
+          amenities_inherit?: boolean
+          bathrooms?: number
+          bedrooms?: number
+          block_label?: string | null
+          created_at?: string
+          description?: string | null
+          hero_image_url?: string | null
+          hero_video_url?: string | null
+          id?: string
+          is_active?: boolean
+          location: string
+          max_guests?: number
+          name: string
+          price_monthly_furnished_kes_cents?: number | null
+          price_monthly_kes_cents?: number | null
+          price_nightly_kes_cents?: number | null
+          price_per_night_usd?: number | null
+          slug: string
+          sort_order?: number
+          supports_furnished_option?: boolean
+          supports_monthly?: boolean
+          supports_nightly?: boolean
+          tagline?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amenities_inherit?: boolean
+          bathrooms?: number
+          bedrooms?: number
+          block_label?: string | null
+          created_at?: string
+          description?: string | null
+          hero_image_url?: string | null
+          hero_video_url?: string | null
+          id?: string
+          is_active?: boolean
+          location?: string
+          max_guests?: number
+          name?: string
+          price_monthly_furnished_kes_cents?: number | null
+          price_monthly_kes_cents?: number | null
+          price_nightly_kes_cents?: number | null
+          price_per_night_usd?: number | null
+          slug?: string
+          sort_order?: number
+          supports_furnished_option?: boolean
+          supports_monthly?: boolean
+          supports_nightly?: boolean
+          tagline?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
