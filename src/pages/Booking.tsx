@@ -87,6 +87,26 @@ const Booking = () => {
     })();
   }, [user]);
 
+  // Handle PayPal & Stripe return URLs.
+  useEffect(() => {
+    const payment = search.get("payment");
+    if (!payment) return;
+    const token = search.get("token");
+    const status = search.get("status");
+    if (payment === "paypal" && token) {
+      supabase.functions.invoke("paypal-capture-order", { body: { order_id: token } })
+        .then(({ data, error }) => {
+          if (error) return toast.error(error.message);
+          if (data?.success) toast.success("Payment received! Your booking is confirmed.");
+          else toast.error("PayPal payment was not completed.");
+        });
+    } else if (payment === "card" && status === "success") {
+      toast.success("Payment received! Your booking is confirmed.");
+    } else if (payment === "card" && status === "cancelled") {
+      toast.info("Card payment was cancelled.");
+    }
+  }, [search]);
+
   const nights = useMemo(() => {
     if (!range?.from || !range?.to) return 0;
     return Math.max(0, Math.round((+range.to - +range.from) / 86400000));
