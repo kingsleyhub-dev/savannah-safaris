@@ -1,1 +1,5 @@
 project_id = "edbhbnkmnivpqmcobkni"
+
+# Public webhook called by Safaricom Daraja — must be reachable without JWT.
+[functions.mpesa-callback]
+verify_jwt = false

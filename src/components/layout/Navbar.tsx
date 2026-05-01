@@ -13,6 +13,7 @@ import { toast } from "sonner";
 
 const links = [
   { to: "/", label: "Home" },
+  { to: "/properties", label: "Properties" },
   { to: "/property", label: "The Stay" },
   { to: "/gallery", label: "Gallery" },
   { to: "/services", label: "Services" },
