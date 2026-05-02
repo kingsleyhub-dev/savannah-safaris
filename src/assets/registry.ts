@@ -35,7 +35,10 @@ export const homepage = {
 export const shared = {
   heroLogo: { base: "/assets/shared/logos/home-hero-logo", fallbackExt: "png", alt: "Savannah Safaris" },
   navLogo: { base: "/assets/shared/logos/logo", fallbackExt: "png", alt: "Savannah Safaris logo" },
-  nissan: { base: "/assets/shared/vehicles/nissan", fallbackExt: "jpg", alt: "Joel's Nissan" },
+  nissan: { base: "/assets/shared/vehicles/nissan", fallbackExt: "jpg", responsive: true, alt: "Joel's Nissan — silver Toyota HiAce parked with international flags" },
+  nissan2: { base: "/assets/shared/vehicles/nissan-2", fallbackExt: "jpg", responsive: true, alt: "Joel's Nissan — three-quarter view on a Nairobi street" },
+  nissan3: { base: "/assets/shared/vehicles/nissan-3", fallbackExt: "jpg", responsive: true, alt: "Joel's Nissan — front profile with alloy wheels" },
+  nissanInterior: { base: "/assets/shared/vehicles/nissan-interior", fallbackExt: "jpg", responsive: true, alt: "Joel's Nissan — VIP interior with reclining seats" },
 } satisfies Record<string, Asset>;
 
 // ────────────── Gallery (page-based, grouped by section) ──────────────
