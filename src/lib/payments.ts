@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type PaymentMethod = "mpesa" | "paypal" | "card";
+export type PaymentMethod = "mpesa" | "mpesa_manual" | "paypal" | "card";
 
 export interface PaymentContext {
   bookingId: string;
@@ -68,4 +68,43 @@ export const startCardPayment = async (ctx: PaymentContext) => {
   });
   if (error) throw new Error(error.message);
   return data as { url: string; session_id: string; payment_id: string };
+};
+
+/**
+ * Manual M-Pesa Send Money — guests pay Joel's number directly and submit the
+ * confirmation code. We log a pending `payments` row for admin verification.
+ * No external API is called; the booking stays in `pending` until admin confirms.
+ */
+export const submitManualMpesa = async (
+  ctx: PaymentContext & { txCode: string; senderPhone: string },
+) => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Please sign in to record a payment.");
+  const { data, error } = await supabase
+    .from("payments")
+    .insert({
+      booking_id: ctx.bookingId,
+      user_id: user.id,
+      provider: "mpesa_manual",
+      status: "pending",
+      amount_cents: ctx.amountCents,
+      currency: "KES",
+      provider_reference: ctx.txCode,
+      provider_request: {
+        recipient: "Joel — 0722 51765",
+        sender_phone: ctx.senderPhone,
+        customer_name: ctx.customerName,
+        customer_email: ctx.customerEmail,
+      },
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+
+  await supabase
+    .from("bookings")
+    .update({ payment_method: "mpesa_manual", payment_reference: ctx.txCode, payment_status: "pending" })
+    .eq("id", ctx.bookingId);
+
+  return data as { id: string };
 };
