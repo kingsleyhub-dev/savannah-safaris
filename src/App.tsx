@@ -31,6 +31,7 @@ import AdminDashboard from "./admin/pages/AdminDashboard.tsx";
 import PagesList from "./admin/pages/PagesList.tsx";
 import PageEditor from "./admin/pages/PageEditor.tsx";
 import MediaLibrary from "./admin/pages/MediaLibrary.tsx";
+import GalleryManager from "./admin/pages/GalleryManager.tsx";
 import ContactSettings from "./admin/pages/ContactSettings.tsx";
 import SiteSettings from "./admin/pages/SiteSettings.tsx";
 import UsersPage from "./admin/pages/UsersPage.tsx";
