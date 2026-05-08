@@ -91,7 +91,7 @@ export const PaymentMethodSelector = ({ ctx, onMethodChange, onSuccess }: Props)
 
   const copyNumber = async () => {
     try {
-      await navigator.clipboard.writeText(JOEL_MPESA_NUMBER.replace(/\s/g, ""));
+      await navigator.clipboard.writeText(JOEL_MPESA_TILL);
       setCopied(true);
       toast.success("Number copied");
       setTimeout(() => setCopied(false), 1800);
