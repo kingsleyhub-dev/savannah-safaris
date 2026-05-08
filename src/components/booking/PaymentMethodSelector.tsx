@@ -15,8 +15,8 @@ import {
   type PaymentContext,
 } from "@/lib/payments";
 
-const JOEL_MPESA_NUMBER = "0722 51765";
-const JOEL_MPESA_NAME = "Joel";
+const JOEL_MPESA_TILL = "5921486";
+const JOEL_MPESA_NAME = "Joel Mulwa Kivathi";
 
 interface Props {
   ctx: PaymentContext;
