@@ -59,7 +59,10 @@ Deno.serve(async (req) => {
 
     const consumerKey = Deno.env.get("MPESA_CONSUMER_KEY");
     const consumerSecret = Deno.env.get("MPESA_CONSUMER_SECRET");
+    // For Buy Goods (Till): MPESA_SHORTCODE = Head Office / Store number, MPESA_TILL_NUMBER = the Till (e.g. 5921486)
+    // For Paybill: only MPESA_SHORTCODE is needed (Paybill number)
     const shortcode = Deno.env.get("MPESA_SHORTCODE");
+    const tillNumber = Deno.env.get("MPESA_TILL_NUMBER") ?? "5921486";
     const passkey = Deno.env.get("MPESA_PASSKEY");
     const callbackUrl = Deno.env.get("MPESA_CALLBACK_URL");
     const env = Deno.env.get("MPESA_ENV") ?? "sandbox";
