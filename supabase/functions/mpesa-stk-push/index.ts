@@ -124,10 +124,11 @@ Deno.serve(async (req) => {
         BusinessShortCode: shortcode,
         Password: password,
         Timestamp: ts,
-        TransactionType: "CustomerPayBillOnline",
+        // BuyGoodsOnline routes the funds to the Till; PartyB is the Till number.
+        TransactionType: "CustomerBuyGoodsOnline",
         Amount: Math.round(amount_kes),
         PartyA: normalizePhone(phone),
-        PartyB: shortcode,
+        PartyB: tillNumber,
         PhoneNumber: normalizePhone(phone),
         CallBackURL: callbackUrl,
         AccountReference: booking_id.slice(0, 12),
