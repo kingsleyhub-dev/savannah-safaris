@@ -48,9 +48,9 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } },
     );
-    const { data: claims } = await supabase.auth.getClaims(authHeader.replace("Bearer ", ""));
-    const userId = claims?.claims?.sub;
-    if (!userId) return json({ error: "Unauthorized" }, 401);
+    const { data: userData, error: userErr } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+    const userId = userData?.user?.id;
+    if (userErr || !userId) return json({ error: "Unauthorized" }, 401);
 
     const { booking_id, amount_kes, phone, customer_name } = await req.json();
     if (!booking_id || !amount_kes || !phone) {
@@ -59,7 +59,10 @@ Deno.serve(async (req) => {
 
     const consumerKey = Deno.env.get("MPESA_CONSUMER_KEY");
     const consumerSecret = Deno.env.get("MPESA_CONSUMER_SECRET");
+    // For Buy Goods (Till): MPESA_SHORTCODE = Head Office / Store number, MPESA_TILL_NUMBER = the Till (e.g. 5921486)
+    // For Paybill: only MPESA_SHORTCODE is needed (Paybill number)
     const shortcode = Deno.env.get("MPESA_SHORTCODE");
+    const tillNumber = Deno.env.get("MPESA_TILL_NUMBER") ?? "5921486";
     const passkey = Deno.env.get("MPESA_PASSKEY");
     const callbackUrl = Deno.env.get("MPESA_CALLBACK_URL");
     const env = Deno.env.get("MPESA_ENV") ?? "sandbox";
@@ -121,10 +124,11 @@ Deno.serve(async (req) => {
         BusinessShortCode: shortcode,
         Password: password,
         Timestamp: ts,
-        TransactionType: "CustomerPayBillOnline",
+        // BuyGoodsOnline routes the funds to the Till; PartyB is the Till number.
+        TransactionType: "CustomerBuyGoodsOnline",
         Amount: Math.round(amount_kes),
         PartyA: normalizePhone(phone),
-        PartyB: shortcode,
+        PartyB: tillNumber,
         PhoneNumber: normalizePhone(phone),
         CallBackURL: callbackUrl,
         AccountReference: booking_id.slice(0, 12),
