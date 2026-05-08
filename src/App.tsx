@@ -86,6 +86,7 @@ const App = () => (
                 </Route>
                 <Route element={<ProtectedRoute allowedRoles={MEDIA_MANAGER_ROLES} />}>
                   <Route path="media" element={<MediaLibrary />} />
+                  <Route path="gallery" element={<GalleryManager />} />
                 </Route>
                 <Route element={<ProtectedRoute allowedRoles={SETTINGS_MANAGER_ROLES} />}>
                   <Route path="contact" element={<ContactSettings />} />
