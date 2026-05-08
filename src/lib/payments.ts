@@ -91,7 +91,7 @@ export const submitManualMpesa = async (
       currency: "KES",
       provider_reference: ctx.txCode,
       provider_request: {
-        recipient: "Joel — 0722 51765",
+        recipient: "Joel Mulwa Kivathi — Till 5921486",
         sender_phone: ctx.senderPhone,
         customer_name: ctx.customerName,
         customer_email: ctx.customerEmail,
