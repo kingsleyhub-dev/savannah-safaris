@@ -136,19 +136,20 @@ export const PaymentMethodSelector = ({ ctx, onMethodChange, onSuccess }: Props)
         <TabsContent value="joel_mpesa" className="space-y-4 pt-5">
           <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
             <p className="text-sm text-muted-foreground">
-              Send <span className="font-semibold text-foreground">KES {(ctx.amountCents / 100).toLocaleString("en-KE")}</span> via M-Pesa Send Money to:
+              Pay <span className="font-semibold text-foreground">KES {(ctx.amountCents / 100).toLocaleString("en-KE")}</span> via M-Pesa <span className="font-semibold text-foreground">Buy Goods &amp; Services</span> to:
             </p>
             <div className="flex items-center justify-between rounded-lg bg-background px-4 py-3 ring-1 ring-border">
               <div>
-                <p className="text-xs uppercase tracking-wider text-muted-foreground">{JOEL_MPESA_NAME}</p>
-                <p className="font-display text-2xl font-bold tracking-wide">{JOEL_MPESA_NUMBER}</p>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">Till Number · {JOEL_MPESA_NAME}</p>
+                <p className="font-display text-2xl font-bold tracking-wide">{JOEL_MPESA_TILL}</p>
               </div>
               <Button type="button" size="sm" variant="outline" onClick={copyNumber}>
                 {copied ? <Check className="size-4" /> : <Copy className="size-4" />} {copied ? "Copied" : "Copy"}
               </Button>
             </div>
             <ol className="text-xs text-muted-foreground list-decimal pl-4 space-y-1">
-              <li>Open M-Pesa → Send Money → enter the number above.</li>
+              <li>Open M-Pesa → Lipa na M-Pesa → Buy Goods and Services.</li>
+              <li>Enter Till Number <span className="font-semibold text-foreground">{JOEL_MPESA_TILL}</span> ({JOEL_MPESA_NAME}).</li>
               <li>Enter the exact amount and your M-Pesa PIN.</li>
               <li>Paste the confirmation code (SMS) below and submit.</li>
             </ol>
