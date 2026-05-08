@@ -8,50 +8,27 @@ import { supabase } from "@/integrations/supabase/client";
 import { LazyVideo } from "@/components/media/LazyVideo";
 import { ResponsiveImage } from "@/components/media/ResponsiveImage";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
-import { gallery, videos, type Asset } from "@/assets/registry";
+import { videos } from "@/assets/registry";
+import { galleryDefaults, type GalleryDefault } from "@/data/galleryDefaults";
 
-type Item = { src: string; cat: string; alt: string; asset?: Asset };
+type Item = GalleryDefault;
 type MediaAsset = { id: string; public_url: string; kind: "image" | "video"; filename: string; alt_text: string | null; gallery_category: string | null };
 
-// Display order requested by client: Living → Dining → Kitchen → Bedrooms → Bathrooms (then Views/Exterior).
-// Sitting room, dining and kitchen tiles are listed first so they render with eager-load priority.
-const allDefaults: Item[] = [
-  // Living
-  { asset: gallery.living1, src: images.living, cat: "Living Room", alt: "Sitting lounge" },
-  { asset: gallery.living2, src: images.living2, cat: "Living Room", alt: "Lounge — wide view" },
-  // Dining
-  { asset: gallery.dining1, src: images.dining, cat: "Dining Area", alt: "Dining" },
-  { asset: gallery.dining2, src: images.dining2, cat: "Dining Area", alt: "Dining — chandelier view" },
-  { asset: gallery.dining3, src: images.dining3, cat: "Dining Area", alt: "Dining — side view" },
-  // Kitchen
-  { asset: gallery.kitchen1, src: images.kitchen, cat: "Kitchen", alt: "Kitchen" },
-  { asset: gallery.kitchen2, src: images.kitchen2, cat: "Kitchen", alt: "Kitchen — counter view" },
-  { asset: gallery.kitchen3, src: images.kitchen3, cat: "Kitchen", alt: "Kitchen — wide view" },
-  // Bedrooms
-  { asset: gallery.bedroom1, src: images.bedroom, cat: "Bedrooms", alt: "Master bedroom" },
-  { asset: gallery.bedroom1Alt1, src: images.bedroomAlt1, cat: "Bedrooms", alt: "Bedroom — wider view" },
-  { asset: gallery.bedroom1Alt2, src: images.bedroomAlt2, cat: "Bedrooms", alt: "Bedroom — detail" },
-  { asset: gallery.bedroom2, src: images.bedroom2, cat: "Bedrooms", alt: "Second bedroom" },
-  { asset: gallery.bedroom2Alt1, src: images.bedroom2Alt1, cat: "Bedrooms", alt: "Second bedroom — wide view" },
-  { asset: gallery.bedroom2Alt2, src: images.bedroom2Alt2, cat: "Bedrooms", alt: "Second bedroom — headboard detail" },
-  // Bathrooms
-  { asset: gallery.bathroom1, src: images.bathroom, cat: "Bathrooms", alt: "Master bathroom" },
-  { asset: gallery.bathroom1Alt1, src: images.bathroomAlt1, cat: "Bathrooms", alt: "Second bathroom" },
-  { asset: gallery.bathroom1Alt2, src: images.bathroomAlt2, cat: "Bathrooms", alt: "Bathroom — vanity detail" },
-  // Views / exterior
-  { asset: gallery.cityView, src: images.view, cat: "Views", alt: "City view" },
-  { src: images.hero, cat: "Exterior", alt: "Balcony" },
-];
-
-const baseCats = ["All", ...Array.from(new Set(allDefaults.map((i) => i.cat)))];
+const baseCats = ["All", ...Array.from(new Set(galleryDefaults.map((i) => i.cat)))];
 const GRID_SIZES = "(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw";
 
 const Gallery = () => {
   const { get } = useSiteContent();
   const h = (k: string, fb: string) => get("gallery", "hero", k, fb);
-  const all: Item[] = allDefaults.map((d, i) => {
+  // Each default tile can be replaced (`gallery.grid.image{n}`) or hidden
+  // (`gallery.grid.image{n}.hidden = "true"`) by the admin.
+  const all: Item[] = galleryDefaults.flatMap((d, i) => {
+    if (get("gallery", "grid", `image${i + 1}.hidden`, "") === "true") return [];
     const override = resolveImage(get("gallery", "grid", `image${i + 1}`, ""), "");
-    return override ? { ...d, src: override, asset: undefined } : d;
+    const altOverride = get("gallery", "grid", `image${i + 1}.alt`, "");
+    return [override
+      ? { ...d, src: override, alt: altOverride || d.alt, asset: undefined }
+      : { ...d, alt: altOverride || d.alt }];
   });
   const [active, setActive] = useState("All");
   const [openIndex, setOpenIndex] = useState<number | null>(null);
