@@ -129,9 +129,10 @@ const GalleryManager = () => {
     await upsertField(`image${idx + 1}.alt`, `Tile ${idx + 1} alt text`, alt);
   };
 
-  const uploadNewCustom = async (file: File) => {
+  const uploadNewCustom = async (file: File, category: string = "Living Room") => {
     if (!file.type.startsWith("image/")) return toast.error("Please choose an image");
-    setBusyKey("__new__");
+    if (file.size > 10 * 1024 * 1024) return toast.error("Image must be under 10MB");
+    setBusyKey(`__new__${category}`);
     try {
       await requireAdmin(MEDIA_MANAGER_ROLES);
       const ext = file.name.split(".").pop();
@@ -143,10 +144,11 @@ const GalleryManager = () => {
       const { error: dbErr } = await supabase.from("media_assets").insert({
         storage_path: path, public_url: publicUrl, kind: "image",
         filename: file.name, mime_type: file.type, size_bytes: file.size, uploaded_by: user?.id,
-        show_in_gallery: true, is_published: true, published_at: new Date().toISOString(), gallery_category: "Living Room",
+        show_in_gallery: true, is_published: true, published_at: new Date().toISOString(), gallery_category: category,
       });
       if (dbErr) throw dbErr;
-      toast.success("Image added to gallery");
+      toast.success(`Image added to ${category}`);
+      void logAudit("add_gallery_image", "media_asset", undefined, { category, filename: file.name });
       load();
     } catch (e: any) {
       toast.error(e?.message ?? "Upload failed");
