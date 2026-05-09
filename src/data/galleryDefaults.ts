@@ -25,9 +25,10 @@ export const galleryDefaults: GalleryDefault[] = [
   { asset: gallery.bedroom2Alt1, src: images.bedroom2Alt1, cat: "Bedrooms", alt: "Second bedroom — wide view" },
   { asset: gallery.bedroom2Alt2, src: images.bedroom2Alt2, cat: "Bedrooms", alt: "Second bedroom — headboard detail" },
   // Bathrooms
-  { asset: gallery.bathroom1, src: images.bathroom, cat: "Bathrooms", alt: "Master bathroom" },
-  { asset: gallery.bathroom1Alt1, src: images.bathroomAlt1, cat: "Bathrooms", alt: "Second bathroom" },
-  { asset: gallery.bathroom1Alt2, src: images.bathroomAlt2, cat: "Bathrooms", alt: "Bathroom — vanity detail" },
+  { asset: gallery.spaBath, src: images.spaBath, cat: "Bathrooms", alt: "Spa-like master bathroom with rainfall shower" },
+  { asset: gallery.bathroom1, src: images.bathroomAlt1, cat: "Bathrooms", alt: "Master bathroom" },
+  { asset: gallery.bathroom1Alt1, src: images.bathroomAlt2, cat: "Bathrooms", alt: "Second bathroom" },
+  { asset: gallery.bathroom1Alt2, src: images.bathroomVanity, cat: "Bathrooms", alt: "Bathroom — vanity detail" },
   // Views / exterior
   { asset: gallery.cityView, src: images.view, cat: "Views", alt: "City view" },
   { src: images.hero, cat: "Exterior", alt: "Balcony" },

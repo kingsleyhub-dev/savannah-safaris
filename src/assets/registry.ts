@@ -64,6 +64,7 @@ export const gallery = {
   kitchen1: galleryImg("kitchen", "kitchen-1", "Kitchen"),
   kitchen2: galleryImg("kitchen", "kitchen-2", "Kitchen — counter view"),
   kitchen3: galleryImg("kitchen", "kitchen-3", "Kitchen — wide view"),
+  spaBath: galleryImg("bathrooms", "spa-bath", "Spa-like master bathroom with rainfall shower"),
   bathroom1: galleryImg("bathrooms", "bathroom-1", "Master bathroom"),
   bathroom1Alt1: galleryImg("bathrooms", "bathroom-1-alt1", "Second bathroom"),
   bathroom1Alt2: galleryImg("bathrooms", "bathroom-1-alt2", "Bathroom — vanity detail"),

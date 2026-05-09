@@ -6,12 +6,12 @@ import { Users, Clock, Cigarette, Dog, PartyPopper, BedDouble } from "lucide-rea
 import { useSiteContent, resolveImage } from "@/hooks/useSiteContent";
 
 const roomDefaults = [
-  { name: "Master Bedroom", desc: "King bed, ensuite marble bathroom, blackout drapes, city-view window.", img: images.bedroom },
-  { name: "Second Bedroom", desc: "Queen bed, ensuite shower, plush linens, soft natural light.", img: images.bedroom2 },
-  { name: "Sitting Lounge", desc: "Velvet seating, smart TV, fast Wi-Fi, perfect for unwinding.", img: images.living },
+  { name: "Sitting Lounge", desc: "Velvet seating, smart TV, fast Wi-Fi — designed for slow evenings and easy conversation.", img: images.living },
   { name: "Dining Room", desc: "Round table for six under a sculptural pendant — designed for gathering.", img: images.dining },
   { name: "Modern Kitchen", desc: "Marble counters, full appliances, complimentary essentials and coffee.", img: images.kitchen },
-  { name: "Spa-like Bathrooms", desc: "Rainfall showers, gold fixtures, premium amenities.", img: images.bathroom },
+  { name: "Master Bedroom", desc: "King bed, ensuite marble bathroom, blackout drapes, city-view window.", img: images.bedroom },
+  { name: "Second Bedroom", desc: "Queen bed, ensuite shower, plush linens, soft natural light.", img: images.bedroom2 },
+  { name: "Spa-like Bathrooms", desc: "Rainfall showers, gold fixtures, premium amenities — a quiet retreat at the end of every day.", img: images.spaBath },
 ];
 
 const rules = [
