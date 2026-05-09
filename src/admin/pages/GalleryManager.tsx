@@ -165,10 +165,17 @@ const GalleryManager = () => {
   };
 
   const deleteCustom = async (m: CustomMedia) => {
-    if (!confirm(`Delete ${m.filename}?`)) return;
-    await supabase.from("media_assets").delete().eq("id", m.id);
-    toast.success("Deleted");
-    setCustom((cur) => cur.filter((c) => c.id !== m.id));
+    if (!confirm(`Delete ${m.filename}? This permanently removes it from the gallery.`)) return;
+    try {
+      await requireAdmin(MEDIA_MANAGER_ROLES);
+      const { error } = await supabase.from("media_assets").delete().eq("id", m.id);
+      if (error) throw error;
+      void logAudit("delete_gallery_image", "media_asset", m.id, { filename: m.filename });
+      toast.success("Deleted");
+      setCustom((cur) => cur.filter((c) => c.id !== m.id));
+    } catch (e: any) {
+      toast.error(e?.message ?? "Delete failed");
+    }
   };
 
   const tiles = useMemo(() => galleryDefaults.map((d, i) => {
