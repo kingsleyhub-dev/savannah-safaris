@@ -129,9 +129,10 @@ const GalleryManager = () => {
     await upsertField(`image${idx + 1}.alt`, `Tile ${idx + 1} alt text`, alt);
   };
 
-  const uploadNewCustom = async (file: File) => {
+  const uploadNewCustom = async (file: File, category: string = "Living Room") => {
     if (!file.type.startsWith("image/")) return toast.error("Please choose an image");
-    setBusyKey("__new__");
+    if (file.size > 10 * 1024 * 1024) return toast.error("Image must be under 10MB");
+    setBusyKey(`__new__${category}`);
     try {
       await requireAdmin(MEDIA_MANAGER_ROLES);
       const ext = file.name.split(".").pop();
@@ -143,10 +144,11 @@ const GalleryManager = () => {
       const { error: dbErr } = await supabase.from("media_assets").insert({
         storage_path: path, public_url: publicUrl, kind: "image",
         filename: file.name, mime_type: file.type, size_bytes: file.size, uploaded_by: user?.id,
-        show_in_gallery: true, is_published: true, published_at: new Date().toISOString(), gallery_category: "Living Room",
+        show_in_gallery: true, is_published: true, published_at: new Date().toISOString(), gallery_category: category,
       });
       if (dbErr) throw dbErr;
-      toast.success("Image added to gallery");
+      toast.success(`Image added to ${category}`);
+      void logAudit("add_gallery_image", "media_asset", undefined, { category, filename: file.name });
       load();
     } catch (e: any) {
       toast.error(e?.message ?? "Upload failed");
@@ -163,10 +165,17 @@ const GalleryManager = () => {
   };
 
   const deleteCustom = async (m: CustomMedia) => {
-    if (!confirm(`Delete ${m.filename}?`)) return;
-    await supabase.from("media_assets").delete().eq("id", m.id);
-    toast.success("Deleted");
-    setCustom((cur) => cur.filter((c) => c.id !== m.id));
+    if (!confirm(`Delete ${m.filename}? This permanently removes it from the gallery.`)) return;
+    try {
+      await requireAdmin(MEDIA_MANAGER_ROLES);
+      const { error } = await supabase.from("media_assets").delete().eq("id", m.id);
+      if (error) throw error;
+      void logAudit("delete_gallery_image", "media_asset", m.id, { filename: m.filename });
+      toast.success("Deleted");
+      setCustom((cur) => cur.filter((c) => c.id !== m.id));
+    } catch (e: any) {
+      toast.error(e?.message ?? "Delete failed");
+    }
   };
 
   const tiles = useMemo(() => galleryDefaults.map((d, i) => {
@@ -186,83 +195,111 @@ const GalleryManager = () => {
         <p className="text-muted-foreground mt-1">Replace, hide, or edit any image on the public gallery — including the bundled defaults.</p>
       </div>
 
-      <section className="space-y-4">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <h2 className="font-display text-xl font-semibold">Default tiles ({tiles.length})</h2>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {tiles.map((t) => {
-            const displayUrl = t.override || t.default.src;
-            const key = `image${t.idx + 1}`;
-            return (
-              <Card key={key} className={`overflow-hidden ${t.hidden ? "opacity-50" : ""}`}>
-                <div className="relative aspect-[4/3] bg-muted">
-                  <img src={displayUrl} alt={t.alt} className="w-full h-full object-cover" loading="lazy" />
-                  <span className="absolute top-2 left-2 rounded-full bg-foreground/70 px-2.5 py-1 text-[11px] uppercase tracking-wide text-primary-foreground">
-                    {t.default.cat}
-                  </span>
-                  {t.override && <span className="absolute top-2 right-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">Custom</span>}
-                </div>
-                <div className="p-3 space-y-3">
-                  <Input value={t.alt} onChange={(e) => setFields((cur) => ({ ...cur, [`${key}.alt`]: { ...(cur[`${key}.alt`] ?? { id: "", key: `${key}.alt`, draft_value: null, published_value: null }), published_value: e.target.value } }))} onBlur={(e) => updateAlt(t.idx, e.target.value)} placeholder="Image description (alt text)" className="text-xs" />
-                  <div className="flex items-center justify-between gap-2">
-                    <Label htmlFor={`${key}-hidden`} className="text-xs">Hidden on site</Label>
-                    <Switch id={`${key}-hidden`} checked={t.hidden} onCheckedChange={(v) => toggleHidden(t.idx, v)} />
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <label className="inline-flex">
-                      <input type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && handleReplace(t.idx, e.target.files[0])} />
-                      <Button asChild size="sm" variant="outline" disabled={busyKey === key}>
-                        <span>{busyKey === key ? <Loader2 className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />} Replace</span>
-                      </Button>
-                    </label>
-                    {(t.override || t.hidden) && (
-                      <Button size="sm" variant="ghost" onClick={() => resetTile(t.idx)}><RefreshCw className="size-3.5" /> Reset</Button>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      </section>
+      {PHOTO_CATEGORIES.map((cat) => {
+        const sectionTiles = tiles.filter((t) => t.default.cat === cat);
+        const sectionCustom = custom.filter((m) => (m.gallery_category ?? "") === cat);
+        const busyAdd = busyKey === `__new__${cat}`;
+        return (
+          <section key={cat} className="space-y-4 border-t pt-6 first:border-0 first:pt-0">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <h2 className="font-display text-xl font-semibold">{cat}</h2>
+                <p className="text-xs text-muted-foreground">{sectionTiles.length} default • {sectionCustom.length} added</p>
+              </div>
+              <label>
+                <input type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && uploadNewCustom(e.target.files[0], cat)} />
+                <Button asChild size="sm" disabled={busyAdd}>
+                  <span>{busyAdd ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />} Add to {cat}</span>
+                </Button>
+              </label>
+            </div>
 
-      <section className="space-y-4">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <h2 className="font-display text-xl font-semibold">Extra uploads ({custom.length})</h2>
-            <p className="text-xs text-muted-foreground">Images uploaded via Media Library or added here. Toggle "Show in Gallery" + "Published" to publish.</p>
-          </div>
-          <label>
-            <input type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && uploadNewCustom(e.target.files[0])} />
-            <Button asChild disabled={busyKey === "__new__"}>
-              <span>{busyKey === "__new__" ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />} Add image</span>
-            </Button>
-          </label>
-        </div>
-        {custom.length === 0 ? (
-          <Card className="p-10 text-center text-sm text-muted-foreground">No extra images yet.</Card>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {custom.map((m) => (
-              <Card key={m.id} className="overflow-hidden">
-                <div className="aspect-[4/3] bg-muted"><img src={m.public_url} alt={m.alt_text ?? m.filename} className="w-full h-full object-cover" loading="lazy" /></div>
-                <div className="p-3 space-y-2">
-                  <p className="text-xs font-medium truncate">{m.filename}</p>
-                  <Input defaultValue={m.alt_text ?? ""} onBlur={(e) => updateCustom(m.id, { alt_text: e.target.value })} placeholder="Alt text" className="text-xs" />
-                  <select value={m.gallery_category ?? ""} onChange={(e) => updateCustom(m.id, { gallery_category: e.target.value || null })} className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs">
-                    <option value="">Choose section…</option>
-                    {PHOTO_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                  <div className="flex items-center justify-between"><Label className="text-xs">Show in Gallery</Label><Switch checked={m.show_in_gallery} onCheckedChange={(v) => updateCustom(m.id, { show_in_gallery: v, is_published: v ? m.is_published : false })} /></div>
-                  <div className="flex items-center justify-between"><Label className="text-xs">Published</Label><Switch checked={m.is_published} disabled={!m.show_in_gallery} onCheckedChange={(v) => updateCustom(m.id, { is_published: v })} /></div>
-                  <Button size="sm" variant="ghost" className="w-full text-destructive" onClick={() => deleteCustom(m)}><Trash2 className="size-3.5" /> Delete</Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </section>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {sectionTiles.map((t) => {
+                const displayUrl = t.override || t.default.src;
+                const key = `image${t.idx + 1}`;
+                return (
+                  <Card key={key} className={`overflow-hidden ${t.hidden ? "opacity-50" : ""}`}>
+                    <div className="relative aspect-[4/3] bg-muted">
+                      <img src={displayUrl} alt={t.alt} className="w-full h-full object-cover" loading="lazy" />
+                      <span className="absolute top-2 left-2 rounded-full bg-foreground/70 px-2.5 py-1 text-[11px] uppercase tracking-wide text-primary-foreground">Default</span>
+                      {t.override && <span className="absolute top-2 right-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">Custom</span>}
+                      {t.hidden && <span className="absolute bottom-2 left-2 rounded-full bg-destructive px-2 py-0.5 text-[10px] font-semibold text-destructive-foreground">Hidden</span>}
+                    </div>
+                    <div className="p-3 space-y-3">
+                      <Input value={t.alt} onChange={(e) => setFields((cur) => ({ ...cur, [`${key}.alt`]: { ...(cur[`${key}.alt`] ?? { id: "", key: `${key}.alt`, draft_value: null, published_value: null }), published_value: e.target.value } }))} onBlur={(e) => updateAlt(t.idx, e.target.value)} placeholder="Alt text" className="text-xs" />
+                      <div className="flex items-center justify-between gap-2">
+                        <Label htmlFor={`${key}-hidden`} className="text-xs">Remove from site</Label>
+                        <Switch id={`${key}-hidden`} checked={t.hidden} onCheckedChange={(v) => toggleHidden(t.idx, v)} />
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <label className="inline-flex">
+                          <input type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && handleReplace(t.idx, e.target.files[0])} />
+                          <Button asChild size="sm" variant="outline" disabled={busyKey === key}>
+                            <span>{busyKey === key ? <Loader2 className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />} Replace</span>
+                          </Button>
+                        </label>
+                        {(t.override || t.hidden) && (
+                          <Button size="sm" variant="ghost" onClick={() => resetTile(t.idx)}><RefreshCw className="size-3.5" /> Reset</Button>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+
+              {sectionCustom.map((m) => (
+                <Card key={m.id} className="overflow-hidden">
+                  <div className="relative aspect-[4/3] bg-muted">
+                    <img src={m.public_url} alt={m.alt_text ?? m.filename} className="w-full h-full object-cover" loading="lazy" />
+                    <span className="absolute top-2 left-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">Added</span>
+                  </div>
+                  <div className="p-3 space-y-2">
+                    <p className="text-xs font-medium truncate">{m.filename}</p>
+                    <Input defaultValue={m.alt_text ?? ""} onBlur={(e) => updateCustom(m.id, { alt_text: e.target.value })} placeholder="Alt text" className="text-xs" />
+                    <select value={m.gallery_category ?? ""} onChange={(e) => updateCustom(m.id, { gallery_category: e.target.value || null })} className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs">
+                      <option value="">Move to section…</option>
+                      {PHOTO_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    <div className="flex items-center justify-between"><Label className="text-xs">Show in Gallery</Label><Switch checked={m.show_in_gallery} onCheckedChange={(v) => updateCustom(m.id, { show_in_gallery: v, is_published: v ? m.is_published : false })} /></div>
+                    <div className="flex items-center justify-between"><Label className="text-xs">Published</Label><Switch checked={m.is_published} disabled={!m.show_in_gallery} onCheckedChange={(v) => updateCustom(m.id, { is_published: v })} /></div>
+                    <Button size="sm" variant="ghost" className="w-full text-destructive" onClick={() => deleteCustom(m)}><Trash2 className="size-3.5" /> Remove</Button>
+                  </div>
+                </Card>
+              ))}
+
+              {sectionTiles.length === 0 && sectionCustom.length === 0 && (
+                <Card className="p-8 text-center text-xs text-muted-foreground sm:col-span-2 lg:col-span-3">No images in {cat} yet — click "Add to {cat}" above.</Card>
+              )}
+            </div>
+          </section>
+        );
+      })}
+
+      {(() => {
+        const uncategorized = custom.filter((m) => !m.gallery_category || !PHOTO_CATEGORIES.includes(m.gallery_category));
+        if (uncategorized.length === 0) return null;
+        return (
+          <section className="space-y-4 border-t pt-6">
+            <h2 className="font-display text-xl font-semibold">Uncategorized ({uncategorized.length})</h2>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {uncategorized.map((m) => (
+                <Card key={m.id} className="overflow-hidden">
+                  <div className="aspect-[4/3] bg-muted"><img src={m.public_url} alt={m.alt_text ?? m.filename} className="w-full h-full object-cover" loading="lazy" /></div>
+                  <div className="p-3 space-y-2">
+                    <p className="text-xs font-medium truncate">{m.filename}</p>
+                    <select value={m.gallery_category ?? ""} onChange={(e) => updateCustom(m.id, { gallery_category: e.target.value || null })} className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs">
+                      <option value="">Choose section…</option>
+                      {PHOTO_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    <Button size="sm" variant="ghost" className="w-full text-destructive" onClick={() => deleteCustom(m)}><Trash2 className="size-3.5" /> Remove</Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </section>
+        );
+      })()}
     </div>
   );
 };
