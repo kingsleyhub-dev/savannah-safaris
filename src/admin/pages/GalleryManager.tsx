@@ -300,5 +300,8 @@ const GalleryManager = () => {
           </section>
         );
       })()}
+    </div>
+  );
+};
 
 export default GalleryManager;
