@@ -61,11 +61,17 @@ Deno.serve(async (req) => {
     const consumerSecret = Deno.env.get("MPESA_CONSUMER_SECRET");
     // For Buy Goods (Till): MPESA_SHORTCODE = Head Office / Store number, MPESA_TILL_NUMBER = the Till (e.g. 5921486)
     // For Paybill: only MPESA_SHORTCODE is needed (Paybill number)
-    const shortcode = Deno.env.get("MPESA_SHORTCODE");
-    const tillNumber = Deno.env.get("MPESA_TILL_NUMBER") ?? "5921486";
+    const env = Deno.env.get("MPESA_ENV") ?? "sandbox";
+    // In sandbox, Safaricom only allows the test Paybill 174379 with the test passkey.
+    const shortcode = env === "sandbox"
+      ? (Deno.env.get("MPESA_SHORTCODE") ?? "174379")
+      : Deno.env.get("MPESA_SHORTCODE");
+    const tillNumber = env === "sandbox"
+      ? (Deno.env.get("MPESA_TILL_NUMBER") ?? "174379")
+      : (Deno.env.get("MPESA_TILL_NUMBER") ?? "5921486");
     const passkey = Deno.env.get("MPESA_PASSKEY");
     const callbackUrl = Deno.env.get("MPESA_CALLBACK_URL");
-    const env = Deno.env.get("MPESA_ENV") ?? "sandbox";
+    const txType = env === "sandbox" ? "CustomerPayBillOnline" : "CustomerBuyGoodsOnline";
 
     // Always create a payment record so the UI/admin can see attempts.
     const service = createClient(
@@ -124,11 +130,10 @@ Deno.serve(async (req) => {
         BusinessShortCode: shortcode,
         Password: password,
         Timestamp: ts,
-        // BuyGoodsOnline routes the funds to the Till; PartyB is the Till number.
-        TransactionType: "CustomerBuyGoodsOnline",
+        TransactionType: txType,
         Amount: Math.round(amount_kes),
         PartyA: normalizePhone(phone),
-        PartyB: tillNumber,
+        PartyB: env === "sandbox" ? shortcode : tillNumber,
         PhoneNumber: normalizePhone(phone),
         CallBackURL: callbackUrl,
         AccountReference: booking_id.slice(0, 12),
