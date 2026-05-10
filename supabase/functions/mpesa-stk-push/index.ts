@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
       : (Deno.env.get("MPESA_TILL_NUMBER") ?? "5921486");
     const passkey = Deno.env.get("MPESA_PASSKEY");
     const callbackUrl = Deno.env.get("MPESA_CALLBACK_URL");
-    const env = Deno.env.get("MPESA_ENV") ?? "sandbox";
+    const txType = env === "sandbox" ? "CustomerPayBillOnline" : "CustomerBuyGoodsOnline";
 
     // Always create a payment record so the UI/admin can see attempts.
     const service = createClient(
