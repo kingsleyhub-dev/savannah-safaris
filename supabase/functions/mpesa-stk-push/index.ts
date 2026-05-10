@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
         TransactionType: txType,
         Amount: Math.round(amount_kes),
         PartyA: normalizePhone(phone),
-        PartyB: tillNumber,
+        PartyB: env === "sandbox" ? shortcode : tillNumber,
         PhoneNumber: normalizePhone(phone),
         CallBackURL: callbackUrl,
         AccountReference: booking_id.slice(0, 12),
